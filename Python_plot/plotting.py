@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+#Nalezy ustawic numer portu COM
+#Nalezy ustawic liczbe bitow na jeden punkt
+
 
 from threading import Thread
 import serial
@@ -12,7 +15,7 @@ import pandas as pd
 
 
 class serialPlot:
-    def __init__(self, serialPort='/dev/ttyUSB0', serialBaud=38400, plotLength=100, dataNumBytes=2, numPlots=1):
+    def __init__(self, serialPort='COM6', serialBaud=38400, plotLength=100, dataNumBytes=2, numPlots=1):
         self.port = serialPort
         self.baud = serialBaud
         self.plotMaxLength = plotLength
@@ -25,7 +28,7 @@ class serialPlot:
         elif dataNumBytes == 4:
             self.dataType = 'f'  # 4 byte float
         self.data = []
-        for i in range(numPlots):  # give an array for each type of data and store them in a list
+        for i in range(numPlots):  # zwraca macierz dla kazdego typu i przechowuje jako liste
             self.data.append(collections.deque([0] * plotLength, maxlen=plotLength))
         self.isRun = True
         self.isReceiving = False
@@ -34,18 +37,18 @@ class serialPlot:
         self.previousTimer = 0
         # self.csvData = []
 
-        print('Trying to connect to: ' + str(serialPort) + ' at ' + str(serialBaud) + ' BAUD.')
+        print('Laczenie z : ' + str(serialPort) + ' przy ' + str(serialBaud) + ' BAUD.')
         try:
             self.serialConnection = serial.Serial(serialPort, serialBaud, timeout=4)
-            print('Connected to ' + str(serialPort) + ' at ' + str(serialBaud) + ' BAUD.')
+            print('Polaczono z ' + str(serialPort) + ' przy ' + str(serialBaud) + ' BAUD.')
         except:
-            print("Failed to connect with " + str(serialPort) + ' at ' + str(serialBaud) + ' BAUD.')
+            print("Nieudane polaczenie z " + str(serialPort) + ' przy ' + str(serialBaud) + ' BAUD.')
 
     def readSerialStart(self):
         if self.thread == None:
             self.thread = Thread(target=self.backgroundThread)
             self.thread.start()
-            # Block till we start receiving values
+            # Warunek rozpoczecia pracy po otrzymaniu wartosci/odczytow
             while self.isReceiving != True:
                 time.sleep(0.1)
 
@@ -53,7 +56,7 @@ class serialPlot:
         currentTimer = time.perf_counter()
         self.plotTimer = int((currentTimer - self.previousTimer) * 1000)  # the first reading will be erroneous
         self.previousTimer = currentTimer
-        timeText.set_text('Plot Interval = ' + str(self.plotTimer) + 'ms')
+        timeText.set_text('Interwał = ' + str(self.plotTimer) + ' [ms]')
         privateData = copy.deepcopy(
             self.rawData[:])  # so that the 3 values in our plots will be synchronized to the same sample time
         for i in range(self.numPlots):
@@ -76,17 +79,16 @@ class serialPlot:
         self.isRun = False
         self.thread.join()
         self.serialConnection.close()
-        print('Disconnected...')
+        print('Rozłączono...')
         # df = pd.DataFrame(self.csvData)
         # df.to_csv('/home/rikisenia/Desktop/data.csv')
 
 
 def main():
-    # portName = 'COM5'
-    portName = '/dev/ttyUSB0'
-    baudRate = 38400
+    portName = 'COM6'
+    baudRate = 38400        #wartosc wymagana dla odpowiedniej synchronizacji
     maxPlotLength = 100  # number of points in x-axis of real time plot
-    dataNumBytes = 4  # number of bytes of 1 data point
+    dataNumBytes = 2  #number of bytes of 1 data point
     numPlots = 3  # number of plots in 1 graph
     s = serialPlot(portName, baudRate, maxPlotLength, dataNumBytes, numPlots)  # initializes all required variables
     s.readSerialStart()  # starts background thread
@@ -96,15 +98,15 @@ def main():
     xmin = 0
     xmax = maxPlotLength
     ymin = -(1)
-    ymax = 1
+    ymax = 1200
     fig = plt.figure(figsize=(10, 8))
     ax = plt.axes(xlim=(xmin, xmax), ylim=(float(ymin - (ymax - ymin) / 10), float(ymax + (ymax - ymin) / 10)))
-    ax.set_title('Arduino Accelerometer')
-    ax.set_xlabel("Time")
-    ax.set_ylabel("Accelerometer Output")
+    ax.set_title('Odczyt wartości')
+    ax.set_xlabel("Nr próbki")
+    ax.set_ylabel("Wartości")
 
-    lineLabel = ['X', 'Y', 'Z']
-    style = ['r-', 'c-', 'b-']  # linestyles for the different plots
+    lineLabel = ['D1', 'D2', 'D3']
+    style = ['r-', 'c-', 'b-']  # linestyles dla kazdego z wykresow
     timeText = ax.text(0.70, 0.95, '', transform=ax.transAxes)
     lines = []
     lineValueText = []
