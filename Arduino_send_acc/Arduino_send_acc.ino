@@ -35,7 +35,7 @@ void setup() {
 void loop() {
   if (micros() - czas_ostatni >= napetle){
     IMU.readSensor();
-    d1 = IMU.getAccelX_mss(); //[ms]
+    d1 = IMU.getAccelX_mss(); //[ms]00
     d2 = IMU.getAccelY_mss();
     d3 = IMU.getAccelZ_mss();
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-#przetlumaczyc komentarze, zmienic struktura <-----------------------------------------------------------------
+
 from datetime import datetime
 import serial
 import struct
@@ -36,13 +36,15 @@ class serialPlot:
     def getSerialData(self, t):
         #odbieranie danych, t - czas probkowania
         self.serialConnection.reset_input_buffer()
+        print("Rejestracja danych przez %d sek" % t)
         startTime = datetime.now()
 
         while (datetime.now() - startTime).total_seconds() < t:
+            print(datetime.now() - startTime)
             self.serialConnection.readinto(self.rawData)    #pobranie danych z portu
             self.dataBlock.append(self.rawData[:])          #dodanie danych
 
-        print("Rejestracja danych przez %d sek"%t)
+
         self.close()
         print("Przetwarzanie danych")
 
@@ -53,7 +55,7 @@ class serialPlot:
                 self.data[j].append(copy.copy(value))
         print("Eksport danych...")
         csvData = np.flip(np.array(self.data), 1).transpose()
-        np.savetxt('magnetometr.csv', csvData, delimiter=',', fmt='%i')
+        np.savetxt('data.csv', csvData, delimiter=',', fmt='%i')
         print("Zakończono akwizycję danych. Plik: magnetometr.csv")
 
     def close(self):
@@ -64,11 +66,11 @@ class serialPlot:
 def main():
     portName = 'COM9'
     baudRate = 115200
-    dataNumBytes = 2        # liczba bajtów na jedną zmienną
+    dataNumBytes = 4        # liczba bajtów na jedną zmienną
     numVariables = 9        # liczba odbieranych danych
     s = serialPlot(portName, baudRate, dataNumBytes, numVariables)   # inicjacja obiektu klasy serialPlot
     time.sleep(2)
-    s.getSerialData(60)
+    s.getSerialData(120)    #czas  pobierania danych
 
 
 if __name__ == '__main__':
